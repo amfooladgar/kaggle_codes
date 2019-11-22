@@ -34,6 +34,7 @@ number_of_months =  np.size(dataset_train.date_block_num.unique())
 
 temp=dataset_train.copy()
 dataset_train.sort_values(by='date',inplace=True)
+dataset_train = dataset_train.reset_index(drop=True)
 #train_gp=dataset_train.groupby(['shop_id','item_id', 'date'],as_index=False)
 #train_gp = train_gp.agg({'item_cnt_day':['mean']})
 
@@ -190,12 +191,14 @@ dataset_test.drop(['ID'], axis=1, inplace=True)
 
 dataset_test2 = dataset_test.copy()
 dataset_train.sort_values(by='date',inplace=True)
+dataset_train = dataset_train.reset_index(drop=True)
 list_of_train_set_days = np.array(dataset_train.date.unique())
 list_of_considered_trainSet_withTestset = np.array(np.split(list_of_train_set_days,[1033-299])[1])
 list_of_toBeDeleted_trainSet_entries = np.array(np.split(list_of_train_set_days,[1033-299])[0])
 temp = dataset_train.copy()
 #dataset_train.sort_values(by='date',inplace=True)
 temp.sort_values(by='date',inplace=True)
+temp = temp.reset_index(drop=True)
 Index_of_last_entry_to_delete = temp[temp['date']== list_of_toBeDeleted_trainSet_entries[-1]].date.index[-1]
 temp.drop(temp.index[0:Index_of_last_entry_to_delete],axis=0, inplace=True)
    
@@ -266,7 +269,7 @@ for i in list_of_considered_trainSet_withTestset:
     final_predicted_test_set.rename(columns={"shop_id(t)": "shop_id", "item_id(t)": "item_id","date_block_num(t+1)":"date_block_num"},inplace=True)
     
     final_predicted_test_removed_unwanted = final_predicted_test_set[final_predicted_test_set['date_block_num']==34]
-    final_predicted_test_removed_unwanted = final_predicted_test_set.groupby(['shop_id', 'item_id','date_block_num'], as_index=False)['item_cnt_day'].sum()
+#    final_predicted_test_removed_unwanted = final_predicted_test_set.groupby(['shop_id', 'item_id','date_block_num'], as_index=False)['item_cnt_day'].sum()
     
     print('length of dataset_total' ,len(dataset_total))
     print('length of dataset_test2' ,len(dataset_test2))
