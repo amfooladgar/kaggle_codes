@@ -192,18 +192,20 @@ dataset_train.drop(['date'], axis=1, inplace=True)
 
 from sklearn.preprocessing import StandardScaler
 
+number_of_days_to_predict = 30
 
-for i in range(2):
+for i in range(np.array(dataset_train.date.unique())):
+    
     dataset_test2 = pd.concat([dataset_test2,dataset_test],axis=0,sort=False,ignore_index=True)
 
     number_of_shop_item_entries=len(dataset_test2.groupby(['shop_id','item_id'],as_index=False))
 
     dataset_total = pd.concat([dataset_train,dataset_test2],axis=0,sort=False,ignore_index=True)
     
-    rows_to_be_dropped = (len(dataset_total)-len(dataset_test2)-1000000)
-    #dataset_total.drop(['ID'], axis=1, inplace=True)
-    dataset_total.drop(dataset_total.index[:rows_to_be_dropped],axis=0, inplace=True)
-    #inputs = sc_X.fit_transform(inputs)
+#    rows_to_be_dropped = (len(dataset_total)-len(dataset_test2))
+#    #dataset_total.drop(['ID'], axis=1, inplace=True)
+#    dataset_total.drop(dataset_total.index[:rows_to_be_dropped],axis=0, inplace=True)
+#    #inputs = sc_X.fit_transform(inputs)
     
     #X_test = np.array(X_test)    
     #X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
@@ -256,8 +258,9 @@ for i in range(2):
     final_predicted_test_removed_unwanted = final_predicted_test_set[final_predicted_test_set['date_block_num']==34]
     final_predicted_test_removed_unwanted = final_predicted_test_set.groupby(['shop_id', 'item_id','date_block_num'], as_index=False)['item_cnt_day'].sum()
     dataset_test2 = pd.concat([dataset_total,final_predicted_test_removed_unwanted],axis=0,sort=False,ignore_index=True)
+    print(' Day %d is just predicted' % i)
 
-
+#final_predicted_test_removed_unwanted['item_cnt_day'].divide(number_of_days_to_predict)
 
 dataset_test = pd.read_csv('test.csv')
 To_submit_results = dataset_test
