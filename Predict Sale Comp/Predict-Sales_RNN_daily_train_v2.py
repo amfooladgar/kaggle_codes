@@ -188,11 +188,14 @@ dataset_test['item_price'] = 0
 dataset_test['item_cnt_day'] = 0
 dataset_test.drop(['ID'], axis=1, inplace=True)
 
+dataset_test2 = dataset_test.copy()
+dataset_train.sort_values(by='date',inplace=True)
 list_of_train_set_days = np.array(dataset_train.date.unique())
-list_of_considered_trainSet_withTestset = np.array(np.split(list_of_train_set_days,[1033-59])[1])
-list_of_toBeDeleted_trainSet_entries = np.array(np.split(list_of_train_set_days,[1033-59])[0])
+list_of_considered_trainSet_withTestset = np.array(np.split(list_of_train_set_days,[1033-299])[1])
+list_of_toBeDeleted_trainSet_entries = np.array(np.split(list_of_train_set_days,[1033-299])[0])
 temp = dataset_train.copy()
 #dataset_train.sort_values(by='date',inplace=True)
+temp.sort_values(by='date',inplace=True)
 Index_of_last_entry_to_delete = temp[temp['date']== list_of_toBeDeleted_trainSet_entries[-1]].date.index[-1]
 temp.drop(temp.index[0:Index_of_last_entry_to_delete],axis=0, inplace=True)
    
@@ -200,15 +203,15 @@ from sklearn.preprocessing import StandardScaler
 j=1
 for i in list_of_considered_trainSet_withTestset:
 
-    temp = temp[(temp['date'] != i )]
+    temp = temp[(temp['date'] != pd.to_datetime(i) )]
     dataset_train_temp = temp.copy()
     dataset_train_temp.drop(['date'], axis=1, inplace=True)
   #  dataset_test2 = pd.concat([dataset_test2,dataset_test],axis=0,sort=False,ignore_index=True)
 
  #   number_of_shop_item_entries=len(dataset_test.groupby(['shop_id','item_id'],as_index=False))
 
-    dataset_total = pd.concat([dataset_train_temp,dataset_test],axis=0,sort=False,ignore_index=True)
-    
+    dataset_total = pd.concat([dataset_train_temp,dataset_test2],axis=0,sort=False,ignore_index=True)
+
 #    rows_to_be_dropped = (len(dataset_total)-len(dataset_test2))
 #    #dataset_total.drop(['ID'], axis=1, inplace=True)
 #    dataset_total.drop(dataset_total.index[:rows_to_be_dropped],axis=0, inplace=True)
@@ -264,9 +267,15 @@ for i in list_of_considered_trainSet_withTestset:
     
     final_predicted_test_removed_unwanted = final_predicted_test_set[final_predicted_test_set['date_block_num']==34]
     final_predicted_test_removed_unwanted = final_predicted_test_set.groupby(['shop_id', 'item_id','date_block_num'], as_index=False)['item_cnt_day'].sum()
-    dataset_test2 = pd.concat([dataset_total,final_predicted_test_removed_unwanted],axis=0,sort=False,ignore_index=True)
     
-    print(' Day %d is just predicted' % j)
+    print('length of dataset_total' ,len(dataset_total))
+    print('length of dataset_test2' ,len(dataset_test2))
+    print('length of dataset_test' ,len(dataset_test))
+    print('length of dataset_train' ,len(dataset_train))
+    print('length of dataset_train_temp' ,len(dataset_train_temp))
+    print('length of final_predicted_test_removed_unwanted' ,len(final_predicted_test_removed_unwanted))
+    dataset_test2 = pd.concat([final_predicted_test_removed_unwanted, dataset_test],axis=0,sort=False,ignore_index=True)
+    print(' Day %d is just predicted and completed' % j)
     j+=1
 
 #final_predicted_test_removed_unwanted['item_cnt_day'].divide(number_of_days_to_predict)
