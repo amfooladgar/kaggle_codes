@@ -32,7 +32,7 @@ list_of_all_available_stores_both_train_test=[x for x in list_of_stores_in_test_
 
 number_of_months =  np.size(dataset_train.date_block_num.unique())
 
-temp=dataset_train
+temp=dataset_train.copy()
 dataset_train.sort_values(by='date',inplace=True)
 #train_gp=dataset_train.groupby(['shop_id','item_id', 'date'],as_index=False)
 #train_gp = train_gp.agg({'item_cnt_day':['mean']})
@@ -187,20 +187,27 @@ dataset_test['date_block_num'] = 34
 dataset_test['item_price'] = 0
 dataset_test['item_cnt_day'] = 0
 dataset_test.drop(['ID'], axis=1, inplace=True)
-dataset_test2=dataset_test
-dataset_train.drop(['date'], axis=1, inplace=True)
 
+list_of_train_set_days = np.array(dataset_train.date.unique())
+list_of_considered_trainSet_withTestset = np.array(np.split(list_of_train_set_days,[1033-59])[1])
+list_of_toBeDeleted_trainSet_entries = np.array(np.split(list_of_train_set_days,[1033-59])[0])
+temp = dataset_train.copy()
+#dataset_train.sort_values(by='date',inplace=True)
+Index_of_last_entry_to_delete = temp[temp['date']== list_of_toBeDeleted_trainSet_entries[-1]].date.index[-1]
+temp.drop(temp.index[0:Index_of_last_entry_to_delete],axis=0, inplace=True)
+   
 from sklearn.preprocessing import StandardScaler
+j=1
+for i in list_of_considered_trainSet_withTestset:
 
-number_of_days_to_predict = 30
+    temp = temp[(temp['date'] != i )]
+    dataset_train_temp = temp.copy()
+    dataset_train_temp.drop(['date'], axis=1, inplace=True)
+  #  dataset_test2 = pd.concat([dataset_test2,dataset_test],axis=0,sort=False,ignore_index=True)
 
-for i in range(np.array(dataset_train.date.unique())):
-    
-    dataset_test2 = pd.concat([dataset_test2,dataset_test],axis=0,sort=False,ignore_index=True)
+ #   number_of_shop_item_entries=len(dataset_test.groupby(['shop_id','item_id'],as_index=False))
 
-    number_of_shop_item_entries=len(dataset_test2.groupby(['shop_id','item_id'],as_index=False))
-
-    dataset_total = pd.concat([dataset_train,dataset_test2],axis=0,sort=False,ignore_index=True)
+    dataset_total = pd.concat([dataset_train_temp,dataset_test],axis=0,sort=False,ignore_index=True)
     
 #    rows_to_be_dropped = (len(dataset_total)-len(dataset_test2))
 #    #dataset_total.drop(['ID'], axis=1, inplace=True)
@@ -258,7 +265,9 @@ for i in range(np.array(dataset_train.date.unique())):
     final_predicted_test_removed_unwanted = final_predicted_test_set[final_predicted_test_set['date_block_num']==34]
     final_predicted_test_removed_unwanted = final_predicted_test_set.groupby(['shop_id', 'item_id','date_block_num'], as_index=False)['item_cnt_day'].sum()
     dataset_test2 = pd.concat([dataset_total,final_predicted_test_removed_unwanted],axis=0,sort=False,ignore_index=True)
-    print(' Day %d is just predicted' % i)
+    
+    print(' Day %d is just predicted' % j)
+    j+=1
 
 #final_predicted_test_removed_unwanted['item_cnt_day'].divide(number_of_days_to_predict)
 
