@@ -208,7 +208,7 @@ model_lstm.add(Dense(units=2))
 model_lstm.compile(optimizer= 'adam', loss = 'mean_squared_error')
 
 # Fitting the RNN to Training set
-epochs = 10
+epochs = 1
 batch = 64
 model_lstm.fit(X_train_series, Y_train, validation_data=(X_valid_series, Y_valid), epochs = epochs, batch_size=batch)
 
@@ -255,6 +255,9 @@ last_store = 'shop_id(t-%d)' % window
 test_series = test_series[(test_series['shop_id(t+1)'] == test_series[last_store])]
 test_series = test_series[(test_series['item_id(t+1)'] == test_series[last_item])]
 
+
+one_hot= pd.get_dummies(test_series['shop_id(t)'])
+test_series = pd.concat([test_series, one_hot], axis=1)
 
 # Remove unwanted columns
 columns_to_drop = [('%s(t+%d)' % (col, lag)) for col in ['item_id', 'shop_id']]
@@ -310,4 +313,4 @@ Ali_submission.drop(Ali_submission.index[214200:],axis=0, inplace=True)
 #            final_predicted_test_set.loc[final_predicted_test_set['shop_id(t)']==j].loc[final_predicted_test_set['item_id(t)']==k].item_cnt_day.values[-1]
 #        else:
             
-To_submit_results.to_csv(r'Ali_submission2.csv',index=False)
+To_submit_results.to_csv(r'Ali_submission_monthly_with_shopID_feat_1.csv',index=False)
