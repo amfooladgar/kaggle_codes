@@ -38,7 +38,11 @@ number_of_months =  np.size(dataset_train.date_block_num.unique())
 store_item_Monthly_sales1 = dataset_train.groupby(['date_block_num', 'shop_id', 'item_id'], as_index=False)['item_price'].mean()
 store_item_Monthly_sales2 = dataset_train.groupby(['date_block_num', 'shop_id', 'item_id'], as_index=False)['item_cnt_day'].sum()
 store_item_Monthly_sales = store_item_Monthly_sales1.merge(store_item_Monthly_sales2, on=['date_block_num', 'shop_id', 'item_id'])
-#
+
+df_months = dataset_train.groupby(['shop_id', 'item_id'], as_index=False)['item_cnt_day'].last()
+df_months['item_price'] = 0
+df_months['item_cnt_day'] = 0
+
 #Complete_train_set = pd.DataFrame(columns=['date_block_num', 'shop_id', 'item_id'])
 #for i in range(number_of_months):
 #    for j in list_of_all_available_stores_both_train_test:
@@ -70,6 +74,16 @@ store_item_Monthly_sales = store_item_Monthly_sales1.merge(store_item_Monthly_sa
 #Complete_train_set2 = Complete_train_set.merge(store_item_Monthly_sales, on = ['date_block_num', 'shop_id', 'item_id'], how='outer')
 #Complete_train_set2.sort_values(['shop_id', 'item_id'], inplace=True)
 ##
+
+
+
+Complete_train_set = pd.DataFrame()
+for i in range(number_of_months):
+    df_months['date_block_num']=i
+    Complete_train_set = Complete_train_set.append(df_months)
+store_item_Monthly_sales.reset_index(inplace=True)
+result = store_item_Monthly_sales.merge(Complete_train_set, on=['date_block_num','shop_id', 'item_id'], how = 'outer')
+
 store_item_Monthly_sales.sort_values(['date_block_num'], inplace=True)
 store_item_Monthly_sales.sort_values(['shop_id', 'item_id'], inplace=True)
 
