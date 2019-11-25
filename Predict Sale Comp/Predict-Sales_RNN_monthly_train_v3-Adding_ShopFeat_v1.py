@@ -70,7 +70,7 @@ store_item_Monthly_sales = store_item_Monthly_sales1.merge(store_item_Monthly_sa
 #Complete_train_set2 = Complete_train_set.merge(store_item_Monthly_sales, on = ['date_block_num', 'shop_id', 'item_id'], how='outer')
 #Complete_train_set2.sort_values(['shop_id', 'item_id'], inplace=True)
 ##
-
+store_item_Monthly_sales.sort_values(['date_block_num'], inplace=True)
 store_item_Monthly_sales.sort_values(['shop_id', 'item_id'], inplace=True)
 
 
@@ -102,6 +102,7 @@ lag = 1
 series = series_to_supervised(store_item_Monthly_sales, window=window, lag=lag)
 
 series.head()
+series.describe()
 
 # Encoding categorical data
 
@@ -121,6 +122,11 @@ one_hot= pd.get_dummies(series['shop_id(t)'])
 series = pd.concat([series, one_hot], axis=1)
 one_hot= pd.get_dummies(series['date_block_num(t)'])
 series = pd.concat([series, one_hot], axis=1)
+
+for i in range(window, 0, -1):
+    one_hot= pd.get_dummies(series['date_block_num(t-%d)' %  i])
+    series = pd.concat([series, one_hot], axis=1)
+
 #one_hot= pd.get_dummies(series['shop_id(t+1)'])
 #series = pd.concat([series, one_hot], axis=1)
 
@@ -132,8 +138,6 @@ series.drop(columns_to_drop, axis=1, inplace=True)
 predictable_shops_items_pair_Col =['item_id(t)', 'shop_id(t)']
 predictable_shops_items_pair = series[predictable_shops_items_pair_Col]
 series.drop(['item_id(t)', 'shop_id(t)','date_block_num(t)'], axis=1, inplace=True)
-
-series.describe()
 
 
 # Train/validation split
@@ -248,7 +252,8 @@ dataset_total.sort_values(['shop_id', 'item_id'], inplace=True)
 #df3 = dataset_total.loc[dataset_total['date_block_num']== 34]
 #dataset_total_last_window = pd.concat((df1,df2,df3),axis=0,sort=False)
 
-test_series = series_to_supervised(dataset_total.drop('date_block_num', axis=1), window=window, lag=lag)
+#test_series = series_to_supervised(dataset_total.drop('date_block_num', axis=1), window=window, lag=lag)
+test_series = series_to_supervised(dataset_total, window=window, lag=lag)
 
 # Drop rows with different item or store values than the shifted columns
 
@@ -261,17 +266,24 @@ test_series = test_series[(test_series['item_id(t+1)'] == test_series[last_item]
 one_hot= pd.get_dummies(test_series['shop_id(t)'])
 test_series = pd.concat([test_series, one_hot], axis=1)
 
-# Remove unwanted columns
-columns_to_drop = [('%s(t+%d)' % (col, lag)) for col in ['item_id', 'shop_id']]
+one_hot= pd.get_dummies(test_series['date_block_num(t)'])
+test_series = pd.concat([test_series, one_hot], axis=1)
+
 for i in range(window, 0, -1):
-    columns_to_drop += [('%s(t-%d)' % (col, i)) for col in ['item_id', 'shop_id']]
+    one_hot= pd.get_dummies(test_series['date_block_num(t-%d)' %  i])
+    test_series = pd.concat([test_series, one_hot], axis=1)
+
+
+# Remove unwanted columns
+columns_to_drop = [('%s(t+%d)' % (col, lag)) for col in ['item_id', 'shop_id','date_block_num']]
+for i in range(window, 0, -1):
+    columns_to_drop += [('%s(t-%d)' % (col, i)) for col in ['item_id', 'shop_id','date_block_num']]
 test_series.drop(columns_to_drop, axis=1, inplace=True)
 test_series.reset_index(inplace=True)
 test_series.drop('index', axis=1, inplace=True)
 predictable_shops_items_pair_test_Col =['item_id(t)', 'shop_id(t)']
 predictable_shops_items_pair_test = test_series[predictable_shops_items_pair_test_Col]
-test_series.drop(['item_id(t)', 'shop_id(t)'], axis=1, inplace=True)
-test_series.describe()
+test_series.drop(['item_id(t)', 'shop_id(t)','date_block_num(t)'], axis=1, inplace=True)
 
 
 # Label
