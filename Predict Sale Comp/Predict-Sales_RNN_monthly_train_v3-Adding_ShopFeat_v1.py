@@ -96,10 +96,10 @@ def series_to_supervised(data, window=1, lag=1, dropnan=True):
     return agg
 
 # We will use the current timestep and the last window-size months to forecast next month ahead
-window = 4
+window = 2
 lag = 1
 #series = series_to_supervised(store_item_Monthly_sales.drop('date_block_num', axis=1), window=window, lag=lag)
-series = series_to_supervised(store_item_Monthly_sales.drop('date_block_num', axis=1), window=window, lag=lag)
+series = series_to_supervised(store_item_Monthly_sales, window=window, lag=lag)
 
 series.head()
 
@@ -119,17 +119,19 @@ series = series[(series['item_id(t+1)'] == series[last_item])]
 #    series = pd.concat([series, one_hot], axis=1)
 one_hot= pd.get_dummies(series['shop_id(t)'])
 series = pd.concat([series, one_hot], axis=1)
+one_hot= pd.get_dummies(series['date_block_num(t)'])
+series = pd.concat([series, one_hot], axis=1)
 #one_hot= pd.get_dummies(series['shop_id(t+1)'])
 #series = pd.concat([series, one_hot], axis=1)
 
 # Remove unwanted columns
-columns_to_drop = [('%s(t+%d)' % (col, lag)) for col in ['item_id', 'shop_id']]
+columns_to_drop = [('%s(t+%d)' % (col, lag)) for col in ['item_id', 'shop_id','date_block_num']]
 for i in range(window, 0, -1):
-    columns_to_drop += [('%s(t-%d)' % (col, i)) for col in ['item_id', 'shop_id']]
+    columns_to_drop += [('%s(t-%d)' % (col, i)) for col in ['item_id', 'shop_id','date_block_num']]
 series.drop(columns_to_drop, axis=1, inplace=True)
 predictable_shops_items_pair_Col =['item_id(t)', 'shop_id(t)']
 predictable_shops_items_pair = series[predictable_shops_items_pair_Col]
-series.drop(['item_id(t)', 'shop_id(t)'], axis=1, inplace=True)
+series.drop(['item_id(t)', 'shop_id(t)','date_block_num(t)'], axis=1, inplace=True)
 
 series.describe()
 
@@ -189,11 +191,11 @@ model_lstm = Sequential()
 model_lstm.add(LSTM(units = 50, return_sequences= True, input_shape=(X_train_series.shape[1], X_train_series.shape[2])))
 model_lstm.add(Dropout(0.2))
 
-## Adding the second LSTM layer and some Dropout regularization
+# Adding the second LSTM layer and some Dropout regularization
 #model_lstm.add(LSTM(units = 50, return_sequences= True))
 #model_lstm.add(Dropout(0.2))
-#
-## Adding the third LSTM layer and some Dropout regularization
+
+# Adding the third LSTM layer and some Dropout regularization
 #model_lstm.add(LSTM(units = 50, return_sequences= True))
 #model_lstm.add(Dropout(0.2))
 
@@ -313,4 +315,4 @@ Ali_submission.drop(Ali_submission.index[214200:],axis=0, inplace=True)
 #            final_predicted_test_set.loc[final_predicted_test_set['shop_id(t)']==j].loc[final_predicted_test_set['item_id(t)']==k].item_cnt_day.values[-1]
 #        else:
             
-To_submit_results.to_csv(r'Ali_submission_monthly_with_shopID_feat_1.csv',index=False)
+To_submit_results.to_csv(r'Ali_submission4_monthly_window3_addedFeatureShopId.csv',index=False)
