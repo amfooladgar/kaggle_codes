@@ -64,7 +64,7 @@ def series_to_supervised(data, window=1, lag=1, dropnan=True):
 
 
 # We will use the current timestep and the last window-size months to forecast next month ahead
-window = 29
+window = 1
 lag = 1
 #series = series_to_supervised(store_item_Monthly_sales.drop('date_block_num', axis=1), window=window, lag=lag)
 series = series_to_supervised(dataset_train.drop(['date_block_num','date'], axis=1), window=window, lag=lag)
@@ -157,7 +157,7 @@ model_lstm.compile(optimizer= 'adam', loss = 'mean_squared_error')
 
 # Fitting the RNN to Training set
 epochs = 20
-batch = 256
+batch = 64
 model_lstm.fit(X_train_series, Y_train, validation_data=(X_valid_series, Y_valid), epochs = epochs, batch_size=batch)
 
 
@@ -193,8 +193,8 @@ dataset_test2 = dataset_test.copy()
 dataset_train.sort_values(by='date',inplace=True)
 dataset_train = dataset_train.reset_index(drop=True)
 list_of_train_set_days = np.array(dataset_train.date.unique())
-list_of_considered_trainSet_withTestset = np.array(np.split(list_of_train_set_days,[1033-299])[1])
-list_of_toBeDeleted_trainSet_entries = np.array(np.split(list_of_train_set_days,[1033-299])[0])
+list_of_considered_trainSet_withTestset = np.array(np.split(list_of_train_set_days,[1033-1032])[1])
+list_of_toBeDeleted_trainSet_entries = np.array(np.split(list_of_train_set_days,[1033-1032])[0])
 temp = dataset_train.copy()
 #dataset_train.sort_values(by='date',inplace=True)
 temp.sort_values(by='date',inplace=True)
@@ -269,7 +269,7 @@ for i in list_of_considered_trainSet_withTestset:
     final_predicted_test_set.rename(columns={"shop_id(t)": "shop_id", "item_id(t)": "item_id","date_block_num(t+1)":"date_block_num"},inplace=True)
     
     final_predicted_test_removed_unwanted = final_predicted_test_set[final_predicted_test_set['date_block_num']==34]
-#    final_predicted_test_removed_unwanted = final_predicted_test_set.groupby(['shop_id', 'item_id','date_block_num'], as_index=False)['item_cnt_day'].sum()
+#
     
     print('length of dataset_total' ,len(dataset_total))
     print('length of dataset_test2' ,len(dataset_test2))
@@ -280,9 +280,13 @@ for i in list_of_considered_trainSet_withTestset:
     dataset_test2 = pd.concat([final_predicted_test_removed_unwanted, dataset_test],axis=0,sort=False,ignore_index=True)
     print(' Day %d is just predicted and completed' % j)
     j+=1
+    if j==31:
+        break
+
 
 #final_predicted_test_removed_unwanted['item_cnt_day'].divide(number_of_days_to_predict)
-
+final_predicted_test_removed_unwanted = final_predicted_test_removed_unwanted.groupby(['shop_id', 'item_id'], as_index=False)['item_cnt_day'].sum()
+    
 dataset_test = pd.read_csv('test.csv')
 To_submit_results = dataset_test
 To_submit_results['item_cnt_day'] =np.nan
@@ -301,15 +305,18 @@ Ali_submission.drop(Ali_submission.index[214200:],axis=0, inplace=True)
 #            final_predicted_test_set.loc[final_predicted_test_set['shop_id(t)']==j].loc[final_predicted_test_set['item_id(t)']==k].item_cnt_day.values[-1]
 #        else:
             
-To_submit_results.to_csv(r'Ali_submission_daily_1.csv',index=False)
+Ali_submission.to_csv(r'Ali_submission_daily_1.csv',index=False)
 
+
+
+final_predicted_test_set.to_csv(r'final_predicted_test_set.csv',index=False)
 
 # ----------------------to save and load the trained model
 import pickle
 # to export the trained model
-with open('model_lstm_trained_daily', 'wb') as model_lstm_trained_daily:
-    pickle.dump(model_lstm, model_lstm_trained_daily)
+with open('model_lstm_trained_daily_window3', 'wb') as model_lstm_trained_daily_window3:
+    pickle.dump(model_lstm, model_lstm_trained_daily_window3)
     
 #to Import the trained model
-with open('model_lstm_trained_daily', 'rb') as model_lstm_trained_daily:
+with open('model_lstm_trained_daily_window3', 'rb') as model_lstm_trained_daily:
     model_lstm = pickle.load(model_lstm_trained_daily)
