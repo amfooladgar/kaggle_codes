@@ -328,3 +328,14 @@ Ali_submission.drop(Ali_submission.index[214200:],axis=0, inplace=True)
 #        else:
             
 To_submit_results.to_csv(r'Ali_submission4_monthly_window3_addedFeatureShopId.csv',index=False)
+
+
+# ----------------------to save and load the trained model
+import pickle
+# to export the trained model
+with open('model_lstm_trained_monthly_window2_featuresShpIdBlkId_1Epoch', 'wb') as model_lstm_trained_daily_window1:
+    pickle.dump(model_lstm, model_lstm_trained_daily_window1)
+    
+#to Import the trained model
+with open('model_lstm_trained_daily_window3', 'rb') as model_lstm_trained_daily:
+    model_lstm = pickle.load(model_lstm_trained_daily)
