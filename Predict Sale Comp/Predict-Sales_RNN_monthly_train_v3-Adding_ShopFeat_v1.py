@@ -39,9 +39,11 @@ store_item_Monthly_sales1 = dataset_train.groupby(['date_block_num', 'shop_id', 
 store_item_Monthly_sales2 = dataset_train.groupby(['date_block_num', 'shop_id', 'item_id'], as_index=False)['item_cnt_day'].sum()
 store_item_Monthly_sales = store_item_Monthly_sales1.merge(store_item_Monthly_sales2, on=['date_block_num', 'shop_id', 'item_id'])
 
-df_months = dataset_train.groupby(['shop_id', 'item_id'], as_index=False)['item_cnt_day'].last()
-df_months['item_price'] = 0
-df_months['item_cnt_day'] = 0
+
+temp = dataset_test.copy()
+temp['item_cnt_day']=0
+df_months = temp.groupby(['shop_id', 'item_id'], as_index=False)['item_cnt_day'].last()
+#df_months['item_cnt_day'] = 0
 
 #Complete_train_set = pd.DataFrame(columns=['date_block_num', 'shop_id', 'item_id'])
 #for i in range(number_of_months):
@@ -78,16 +80,79 @@ df_months['item_cnt_day'] = 0
 
 
 Complete_train_set = pd.DataFrame()
-for i in range(number_of_months):
-    df_months['date_block_num']=i
-    Complete_train_set = Complete_train_set.append(df_months)
-store_item_Monthly_sales.reset_index(inplace=True)
-result = store_item_Monthly_sales.merge(Complete_train_set, on=['date_block_num','shop_id', 'item_id'], how = 'outer')
+temp = dataset_test.copy()
+temp.drop(['ID'], axis=1, inplace=True)
 
+#temp['item_cnt_day']=0
+#temp=temp.groupby(['shop_id', 'item_id'], as_index=False)['item_cnt_day'].last()
+
+for i in range(number_of_months):
+#    df_months = temp.groupby(['shop_id', 'item_id'], as_index=False)['item_cnt_day'].last() 
+    temp['date_block_num']=i
+    df_months = temp.copy()
+    df_months=df_months.merge(store_item_Monthly_sales1.loc[store_item_Monthly_sales1['date_block_num']==i], on=['date_block_num','shop_id', 'item_id'], how = 'left')
+    df_months=df_months.merge(store_item_Monthly_sales2.loc[store_item_Monthly_sales1['date_block_num']==i], on=['date_block_num','shop_id', 'item_id'], how = 'left')
+#    df_months.sort_values(['date_block_num'], inplace=True)
+#    df_months.groupby(['item_id'])['item_price'].fillna(method='ffill', inplace = True)
+    Complete_train_set = Complete_train_set.append(df_months)
+
+
+Complete_train_set.sort_values(['item_id'])['item_price'].fillna(method='ffill', inplace = True)
+Complete_train_set.groupby(['item_id'])['item_cnt_day'].fillna(0, inplace = True)
+Complete_train_set['item_price'].dropna(inplace=True)
+
+
+
+store_item_Monthly_sales= Complete_train_set.merge(store_item_Monthly_sales1, on=['date_block_num','shop_id', 'item_id'], how = 'outer')
+
+store_item_Monthly_sales['item_price'] = store_item_Monthly_sales.apply(
+        lambda row : store_item_Monthly_sales.loc[store_item_Monthly_sales['item_id']==row['item_id']].item_price.mean() if np.isnan(row['item_price']) else row['item_price'], axis =1 
+        )
+tet = Complete_train_set.copy()
+
+list_of_items_to_limit = np.sort(np.array(Complete_train_set.item_id.unique()))
+A = Complete_train_set[Complete_train_set['item_price'].isnull()].groupby(['item_id']).size()
+#A.reset
+#list_of_items_to_limit=list_of_items_to_limit[A!=0]
+#A = A[A!=0]
+#A = A.astype(int)
+Complete_train_set.sort_values(['item_id','item_price'], inplace = True)
+[Complete_train_set['item_cnt_day'].fillna(0, inplace= True)]
+[Complete_train_set['item_price'].fillna(method='ffill',limit=A[i], inplace= True) for i in list_of_items_to_limit]
+
+def fill_nan_item_price_cnt(data):
+    list_of_items_to_limit = np.sort(np.array(data.item_id.unique()))
+    A = data[data['item_price'].isnull()].groupby(['item_id']).size()
+    filleddata=data.sort_values(['item_id','item_price'])
+    [filleddata['item_cnt_day'].fillna(0, inplace= True)]
+    [filleddata['item_price'].fillna(method='ffill',limit=A[i], inplace= True) for i in list_of_items_to_limit]
+    return filleddata
+    
+result_completeSet = fill_nan_item_price_cnt(Complete_train_set)
+
+
+tmp_store_items = store_item_Monthly_sales.head(1000)
+tmp_store_items.loc['date_block_num'].fillnan(0, inplace = True)
+
+tmp_store_items['item_price'] = tmp_store_items.apply(
+        lambda row : tmp_store_items.loc[tmp_store_items['item_id']==row['item_id']].item_price.mean() if np.isnan(row['item_price']) else row['item_price'], axis =1 
+        )
+
+store_item_Monthly_sales= store_item_Monthly_sales.merge(store_item_Monthly_sales2, on=['shop_id', 'item_id'], how = 'outer')
+store_item_Monthly_sales.reset_index(inplace=True)
+store_item_Monthly_sales.drop('index', axis=1, inplace=True)
+#store_item_Monthly_sales = store_item_Monthly_sales.merge(Complete_train_set, on=['date_block_num','shop_id', 'item_id'], how = 'outer')
+store_item_Monthly_sales.drop('item_cnt_day_x', axis=1, inplace=True)
+#store_item_Monthly_sales.drop('item_price_y', axis=1, inplace=True)
+store_item_Monthly_sales.rename(columns={"item_cnt_day_y": "item_cnt_day"},inplace=True)
+#store_item_Monthly_sales.rename(columns={"item_price_x": "item_price"},inplace=True)
 store_item_Monthly_sales.sort_values(['date_block_num'], inplace=True)
 store_item_Monthly_sales.sort_values(['shop_id', 'item_id'], inplace=True)
-
-
+#store_item_Monthly_sales.dropna(inplace=True)
+#store_item_Monthly_sales=store_item_Monthly_sales[(store_item_Monthly_sales['item_price'] != np.nan)]
+tmp = store_item_Monthly_sales.groupby(['date_block_num', 'shop_id', 'item_id'], as_index=False)['item_price'].mean()
+store_item_Monthly_sales.fillna(0,inplace=True)
+store_item_Monthly_sales.sort_values(['shop_id', 'item_id'], inplace=True)
 
 def series_to_supervised(data, window=1, lag=1, dropnan=True):
     cols, names = list(), list()
@@ -110,13 +175,13 @@ def series_to_supervised(data, window=1, lag=1, dropnan=True):
     return agg
 
 # We will use the current timestep and the last window-size months to forecast next month ahead
-window = 2
+window = 10
 lag = 1
 #series = series_to_supervised(store_item_Monthly_sales.drop('date_block_num', axis=1), window=window, lag=lag)
 series = series_to_supervised(store_item_Monthly_sales, window=window, lag=lag)
 
 series.head()
-series.describe()
+#series.describe()
 
 # Encoding categorical data
 
@@ -132,14 +197,14 @@ series = series[(series['item_id(t+1)'] == series[last_item])]
 #for i in range(window, 0, -1):
 #    one_hot= pd.get_dummies(series['shop_id(t-%d)' % i ])
 #    series = pd.concat([series, one_hot], axis=1)
-one_hot= pd.get_dummies(series['shop_id(t)'])
-series = pd.concat([series, one_hot], axis=1)
-one_hot= pd.get_dummies(series['date_block_num(t)'])
-series = pd.concat([series, one_hot], axis=1)
+#one_hot= pd.get_dummies(series['shop_id(t)'])
+#series = pd.concat([series, one_hot], axis=1)
+#one_hot= pd.get_dummies(series['date_block_num(t)'])
+#series = pd.concat([series, one_hot], axis=1)
 
-for i in range(window, 0, -1):
-    one_hot= pd.get_dummies(series['date_block_num(t-%d)' %  i])
-    series = pd.concat([series, one_hot], axis=1)
+#for i in range(window, 0, -1):
+#    one_hot= pd.get_dummies(series['date_block_num(t-%d)' %  i])
+#    series = pd.concat([series, one_hot], axis=1)
 
 #one_hot= pd.get_dummies(series['shop_id(t+1)'])
 #series = pd.concat([series, one_hot], axis=1)
@@ -228,7 +293,7 @@ model_lstm.add(Dense(units=2))
 model_lstm.compile(optimizer= 'adam', loss = 'mean_squared_error')
 
 # Fitting the RNN to Training set
-epochs = 1
+epochs = 10
 batch = 64
 model_lstm.fit(X_train_series, Y_train, validation_data=(X_valid_series, Y_valid), epochs = epochs, batch_size=batch)
 
@@ -276,17 +341,17 @@ last_store = 'shop_id(t-%d)' % window
 test_series = test_series[(test_series['shop_id(t+1)'] == test_series[last_store])]
 test_series = test_series[(test_series['item_id(t+1)'] == test_series[last_item])]
 
-
-one_hot= pd.get_dummies(test_series['shop_id(t)'])
-test_series = pd.concat([test_series, one_hot], axis=1)
-
-one_hot= pd.get_dummies(test_series['date_block_num(t)'])
-test_series = pd.concat([test_series, one_hot], axis=1)
-
-for i in range(window, 0, -1):
-    one_hot= pd.get_dummies(test_series['date_block_num(t-%d)' %  i])
-    test_series = pd.concat([test_series, one_hot], axis=1)
-
+#
+#one_hot= pd.get_dummies(test_series['shop_id(t)'])
+#test_series = pd.concat([test_series, one_hot], axis=1)
+#
+#one_hot= pd.get_dummies(test_series['date_block_num(t)'])
+#test_series = pd.concat([test_series, one_hot], axis=1)
+#
+#for i in range(window, 0, -1):
+#    one_hot= pd.get_dummies(test_series['date_block_num(t-%d)' %  i])
+#    test_series = pd.concat([test_series, one_hot], axis=1)
+#
 
 # Remove unwanted columns
 columns_to_drop = [('%s(t+%d)' % (col, lag)) for col in ['item_id', 'shop_id','date_block_num']]

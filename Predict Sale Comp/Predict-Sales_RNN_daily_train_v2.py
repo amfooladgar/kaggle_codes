@@ -305,7 +305,7 @@ Ali_submission.drop(Ali_submission.index[214200:],axis=0, inplace=True)
 #            final_predicted_test_set.loc[final_predicted_test_set['shop_id(t)']==j].loc[final_predicted_test_set['item_id(t)']==k].item_cnt_day.values[-1]
 #        else:
             
-Ali_submission.to_csv(r'Ali_submission_daily_1.csv',index=False)
+Ali_submission.to_csv(r'Ali_submission_daily_2_window1.csv',index=False)
 
 
 
@@ -314,8 +314,8 @@ final_predicted_test_set.to_csv(r'final_predicted_test_set.csv',index=False)
 # ----------------------to save and load the trained model
 import pickle
 # to export the trained model
-with open('model_lstm_trained_daily_window3', 'wb') as model_lstm_trained_daily_window3:
-    pickle.dump(model_lstm, model_lstm_trained_daily_window3)
+with open('model_lstm_trained_daily_window1', 'wb') as model_lstm_trained_daily_window1:
+    pickle.dump(model_lstm, model_lstm_trained_daily_window1)
     
 #to Import the trained model
 with open('model_lstm_trained_daily_window3', 'rb') as model_lstm_trained_daily:
