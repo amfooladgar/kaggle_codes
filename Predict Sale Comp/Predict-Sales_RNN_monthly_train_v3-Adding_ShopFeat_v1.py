@@ -143,21 +143,24 @@ result_completeSet = fill_nan_item_price_cnt(Complete_train_set)
 #tmp_store_items['item_price'] = tmp_store_items.apply(
 #        lambda row : tmp_store_items.loc[tmp_store_items['item_id']==row['item_id']].item_price.mean() if np.isnan(row['item_price']) else row['item_price'], axis =1 
 #        )
+store_item_Monthly_sales = result_completeSet.copy()
 
-store_item_Monthly_sales= store_item_Monthly_sales.merge(store_item_Monthly_sales2, on=['shop_id', 'item_id'], how = 'outer')
-store_item_Monthly_sales.reset_index(inplace=True)
-store_item_Monthly_sales.drop('index', axis=1, inplace=True)
-#store_item_Monthly_sales = store_item_Monthly_sales.merge(Complete_train_set, on=['date_block_num','shop_id', 'item_id'], how = 'outer')
-store_item_Monthly_sales.drop('item_cnt_day_x', axis=1, inplace=True)
-#store_item_Monthly_sales.drop('item_price_y', axis=1, inplace=True)
-store_item_Monthly_sales.rename(columns={"item_cnt_day_y": "item_cnt_day"},inplace=True)
-#store_item_Monthly_sales.rename(columns={"item_price_x": "item_price"},inplace=True)
-store_item_Monthly_sales.sort_values(['date_block_num'], inplace=True)
-store_item_Monthly_sales.sort_values(['shop_id', 'item_id'], inplace=True)
-#store_item_Monthly_sales.dropna(inplace=True)
-#store_item_Monthly_sales=store_item_Monthly_sales[(store_item_Monthly_sales['item_price'] != np.nan)]
-tmp = store_item_Monthly_sales.groupby(['date_block_num', 'shop_id', 'item_id'], as_index=False)['item_price'].mean()
-store_item_Monthly_sales.fillna(0,inplace=True)
+
+
+#store_item_Monthly_sales= store_item_Monthly_sales.merge(store_item_Monthly_sales2, on=['shop_id', 'item_id'], how = 'outer')
+#store_item_Monthly_sales.reset_index(inplace=True)
+#store_item_Monthly_sales.drop('index', axis=1, inplace=True)
+##store_item_Monthly_sales = store_item_Monthly_sales.merge(Complete_train_set, on=['date_block_num','shop_id', 'item_id'], how = 'outer')
+#store_item_Monthly_sales.drop('item_cnt_day_x', axis=1, inplace=True)
+##store_item_Monthly_sales.drop('item_price_y', axis=1, inplace=True)
+#store_item_Monthly_sales.rename(columns={"item_cnt_day_y": "item_cnt_day"},inplace=True)
+##store_item_Monthly_sales.rename(columns={"item_price_x": "item_price"},inplace=True)
+#store_item_Monthly_sales.sort_values(['date_block_num'], inplace=True)
+#store_item_Monthly_sales.sort_values(['shop_id', 'item_id'], inplace=True)
+##store_item_Monthly_sales.dropna(inplace=True)
+##store_item_Monthly_sales=store_item_Monthly_sales[(store_item_Monthly_sales['item_price'] != np.nan)]
+#tmp = store_item_Monthly_sales.groupby(['date_block_num', 'shop_id', 'item_id'], as_index=False)['item_price'].mean()
+#store_item_Monthly_sales.fillna(0,inplace=True)
 store_item_Monthly_sales.sort_values(['shop_id', 'item_id'], inplace=True)
 
 def series_to_supervised(data, window=1, lag=1, dropnan=True):
