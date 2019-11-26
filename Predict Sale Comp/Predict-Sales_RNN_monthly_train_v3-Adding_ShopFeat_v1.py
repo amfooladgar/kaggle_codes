@@ -97,46 +97,52 @@ for i in range(number_of_months):
     Complete_train_set = Complete_train_set.append(df_months)
 
 
-Complete_train_set.sort_values(['item_id'])['item_price'].fillna(method='ffill', inplace = True)
-Complete_train_set.groupby(['item_id'])['item_cnt_day'].fillna(0, inplace = True)
-Complete_train_set['item_price'].dropna(inplace=True)
+#Complete_train_set.sort_values(['item_id'])['item_price'].fillna(method='ffill', inplace = True)
+#Complete_train_set.groupby(['item_id'])['item_cnt_day'].fillna(0, inplace = True)
+#Complete_train_set['item_price'].dropna(inplace=True)
 
-
-
-store_item_Monthly_sales= Complete_train_set.merge(store_item_Monthly_sales1, on=['date_block_num','shop_id', 'item_id'], how = 'outer')
-
-store_item_Monthly_sales['item_price'] = store_item_Monthly_sales.apply(
-        lambda row : store_item_Monthly_sales.loc[store_item_Monthly_sales['item_id']==row['item_id']].item_price.mean() if np.isnan(row['item_price']) else row['item_price'], axis =1 
-        )
-tet = Complete_train_set.copy()
-
-list_of_items_to_limit = np.sort(np.array(Complete_train_set.item_id.unique()))
-A = Complete_train_set[Complete_train_set['item_price'].isnull()].groupby(['item_id']).size()
+#
+#
+#store_item_Monthly_sales= Complete_train_set.merge(store_item_Monthly_sales1, on=['date_block_num','shop_id', 'item_id'], how = 'outer')
+#
+#store_item_Monthly_sales['item_price'] = store_item_Monthly_sales.apply(
+#        lambda row : store_item_Monthly_sales.loc[store_item_Monthly_sales['item_id']==row['item_id']].item_price.mean() if np.isnan(row['item_price']) else row['item_price'], axis =1 
+#        )
+#tet = Complete_train_set.copy()
+#
+#list_of_items_to_limit = np.sort(np.array(Complete_train_set.item_id.unique()))
+#A = Complete_train_set[Complete_train_set['item_price'].isnull()].groupby(['item_id']).size()
 #A.reset
 #list_of_items_to_limit=list_of_items_to_limit[A!=0]
 #A = A[A!=0]
 #A = A.astype(int)
-Complete_train_set.sort_values(['item_id','item_price'], inplace = True)
-[Complete_train_set['item_cnt_day'].fillna(0, inplace= True)]
-[Complete_train_set['item_price'].fillna(method='ffill',limit=A[i], inplace= True) for i in list_of_items_to_limit]
-
+#Complete_train_set.sort_values(['item_id','item_price'], inplace = True)
+#[Complete_train_set['item_cnt_day'].fillna(0, inplace= True)]
+#[Complete_train_set['item_price'].fillna(method='ffill',limit=A[i], inplace= True) for i in list_of_items_to_limit]
+#data = Complete_train_set.head(500000)
 def fill_nan_item_price_cnt(data):
-    list_of_items_to_limit = np.sort(np.array(data.item_id.unique()))
-    A = data[data['item_price'].isnull()].groupby(['item_id']).size()
-    filleddata=data.sort_values(['item_id','item_price'])
-    [filleddata['item_cnt_day'].fillna(0, inplace= True)]
+    A = data[data['item_price'].isnull()].groupby(['item_id','shop_id']).size()    
+    list_of_items_to_limit = A.index.tolist()
+    filleddata=data.sort_values(['item_id','shop_id','item_price'])
+    filleddata['item_cnt_day'].fillna(0, inplace= True)
+    [filleddata['item_price'].fillna(method='ffill',limit=A[i], inplace= True) for i in list_of_items_to_limit]
+    
+    A = filleddata[filleddata['item_price'].isnull()].groupby(['item_id']).size()
+#    list_of_items_to_limit = np.sort(np.array(data.item_id.unique()))
+    list_of_items_to_limit = A.index.tolist()
+    filleddata=filleddata.sort_values(['item_id','item_price'])    
     [filleddata['item_price'].fillna(method='ffill',limit=A[i], inplace= True) for i in list_of_items_to_limit]
     return filleddata
     
 result_completeSet = fill_nan_item_price_cnt(Complete_train_set)
-
-
-tmp_store_items = store_item_Monthly_sales.head(1000)
-tmp_store_items.loc['date_block_num'].fillnan(0, inplace = True)
-
-tmp_store_items['item_price'] = tmp_store_items.apply(
-        lambda row : tmp_store_items.loc[tmp_store_items['item_id']==row['item_id']].item_price.mean() if np.isnan(row['item_price']) else row['item_price'], axis =1 
-        )
+#
+#
+#tmp_store_items = store_item_Monthly_sales.head(1000)
+#tmp_store_items.loc['date_block_num'].fillnan(0, inplace = True)
+#
+#tmp_store_items['item_price'] = tmp_store_items.apply(
+#        lambda row : tmp_store_items.loc[tmp_store_items['item_id']==row['item_id']].item_price.mean() if np.isnan(row['item_price']) else row['item_price'], axis =1 
+#        )
 
 store_item_Monthly_sales= store_item_Monthly_sales.merge(store_item_Monthly_sales2, on=['shop_id', 'item_id'], how = 'outer')
 store_item_Monthly_sales.reset_index(inplace=True)
